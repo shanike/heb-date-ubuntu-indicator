@@ -14,13 +14,14 @@ import os
 import signal
 
 
-APP_INDICATOR_ID = 'hebrew_date'
-
-
 class MyIndicator:
-    def __init__(self):
+
+    APP_INDICATOR_ID = 'hebrew_date'
+
+    def __init__(self, app_indicator_id=None):
+        app_indicator_id = self.APP_INDICATOR_ID if not app_indicator_id else app_indicator_id
         self.indicator = appindicator.Indicator.new(
-            APP_INDICATOR_ID,
+            app_indicator_id,
             "...",
             appindicator.IndicatorCategory.SYSTEM_SERVICES
         )
@@ -36,14 +37,17 @@ class MyIndicator:
         menu = gtk.Menu()
         item_quit = gtk.MenuItem(label='רענון תאריך')
         item_quit.connect('activate', self.set_icon)
-        item_full_date = gtk.MenuItem(label=HebrewDate.today().hebrew_date_string())
+        item_full_date = gtk.MenuItem(label=self.today_hebrew_date().hebrew_date_string())
         menu.append(item_quit)
         menu.append(item_full_date)
         menu.show_all()
         return menu
 
+    def today_hebrew_date(self):
+        return HebrewDate.today() + 1 if self.sun_times.is_after_sunset() else HebrewDate.today()
+
     def set_icon(self, *args, **keywords):
-        heb_day = (HebrewDate.today() + 1 if self.sun_times.is_after_sunset() else HebrewDate.today()).hebrew_day()
+        heb_day = self.today_hebrew_date().hebrew_day()
         icon_path = self.gen_icon_path(heb_day)
         dwg = svgwrite.Drawing(
             filename=icon_path,
